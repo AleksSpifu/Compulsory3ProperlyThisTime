@@ -13,11 +13,7 @@
 int main()
 {
     srand(time(NULL));
-    makeEmptyBoard();
-    makeBoard();
-    printBoard();
-
-    writeLetters();
+    play();
     /*int loginValue = login();
     if (loginValue == 2) {
         std::cout << "Error. The gridsize exceeds 26 characters and can therefore not fit the alphabet. Please change the values.";
@@ -34,7 +30,164 @@ int main()
     return 0;
 }
 
-void makeEmptyBoard()
+void play()
+{
+    makeEmptyBoard(playerBoard);
+    makeEmptyBoard(aiBoard);
+    if (threeTiledShips) {
+        makeBoard3(playerBoard);
+        makeBoard3(aiBoard);
+    }
+    else {
+        makeBoard(playerBoard);
+        makeBoard(aiBoard);
+    }
+    
+    numberOfShots = numberOfShips * 3;
+    while (numberOfShots > 0 && numberOfHits < numberOfShips) {
+        std::cout << "You have " << numberOfShots << " shots left, there are " << numberOfShips - numberOfHits << " ships left, so far you have sunk " << numberOfHits << " ships.\n";
+        std::cout << "The top board is where you will guess. The bottom one is your ships, and the AI will guess.\n";
+        if (displayShipLocations) {
+            printBoard(playerBoard);
+        }
+        else {
+            printPlayerBoard(playerBoard);
+        }
+        
+        writeLetters();
+        std::cout << "\nYour ships:\n";
+        printBoard(aiBoard);
+        shoot(playerBoard);
+        system("cls");
+    }
+    
+    
+}
+
+void aiTask() 
+{
+
+}
+
+void makeBoard3(char board[M][N])
+{
+    int shipsLeft = numberOfShips;
+    bool insertOnRow = true;
+    while (shipsLeft >= 3) {
+        int row = randomRow();
+        int col = randomColumn();
+
+        if (insertOnRow) {
+            if (row > 0 && row < (M-1)) {
+                if (board[row - 1][col] != SHIP && board[row][col] != SHIP && board[row + 1][col] != SHIP) {
+                    board[row - 1][col] = SHIP;
+                    board[row][col] = SHIP;
+                    board[row + 1][col] = SHIP;
+                    shipsLeft -= 3;
+                    insertOnRow = false;
+                }
+            }
+        }
+        else if (!insertOnRow) {
+            if (col > 0 && col < (N-1)) {
+                if (board[row][col - 1] != SHIP && board[row][col] != SHIP && board[row][col + 1] != SHIP) {
+                    board[row][col - 1] = SHIP;
+                    board[row][col] = SHIP;
+                    board[row][col + 1] = SHIP;
+                    shipsLeft -= 3;
+                    insertOnRow = true;
+                }
+            }
+        }
+    }
+
+    //in case the number of ships doesn't work with the 3 long ships, it will make sure it gets to the correct amount with single ships. 
+    while (shipsLeft > 0) {
+        int row = randomRow();
+        int col = randomColumn();
+        if (board[row][col] != SHIP) {
+            board[row][col] = SHIP;
+            shipsLeft--;
+        }
+    }
+}
+
+void shoot(char board[M][N])
+{
+    std::cout << "Which tile would you like to hit?\n";
+    int tempInt = getInputFromUser();
+    int row{};
+    int col{};
+
+    while (tempInt >= 100) {
+        col++;
+        tempInt -= 100;
+    }
+    row = tempInt;
+
+    if (board[row][col] == SHIP) {
+        board[row][col] = HIT;
+        numberOfHits++;
+        numberOfShots--;
+    }
+    else if (board[row][col] == BLANK) {
+        board[row][col] = MISS;
+        numberOfShots--;
+    }
+    else {
+        numberOfShots--;
+    }
+
+}
+
+int getInputFromUser() {
+    std::cout << "\nPlease enter the tile you would like to shoot. (A1 for example)\n";
+    std::string input{};
+    int returnValue = 0;
+    bool acceptedInput = false;
+    while (!acceptedInput) {
+        std::cin >> input;
+        if (input.size() == 2) {
+            if ((input[0] >= 65 && input[0] <= 64 + N) || (input[0] >= 97 && input[0] <= 96 + N)) {
+                if (input[1] > 48 && input[1] <= M + 48) {
+                    returnValue += M-(input[1] - 48);
+                    if (input[0] > 90) {
+                        input[0] -= 32;
+                    }
+                    returnValue += (letterToNumber(input[0]) * 100);
+                    return returnValue;
+                    acceptedInput = true;
+                }
+            }
+        }
+        else if (input.size() > 2) {
+            if ((input[0] >= 65 && input[0] <= 64 + N) || (input[0] >= 97 && input[0] <= 96 + N)) {
+                std::string tempString{};
+                int tempInt{};
+                for (int i = 1; i < input.size(); i++) {
+                    tempString.push_back(input[i]);
+                }
+                tempInt = (std::stoi(tempString));
+                if (tempInt > 0 && tempInt <= M) {
+                    returnValue += M-(tempInt);
+                    if (input[0] > 90) {
+                        input[0] -= 32;
+                    }
+                    
+                    returnValue += (letterToNumber(input[0]) * 100);
+                    
+                    return returnValue;
+                    acceptedInput = true;
+                }
+            }
+        }
+        std::cout << "Invalid input. Please try again.\n";
+    }
+
+
+}
+
+void makeEmptyBoard(char board[M][N])
 {
     for (int r = 0; r < M; r++) {
         for (int c = 0; c < N; c++) {
@@ -43,7 +196,7 @@ void makeEmptyBoard()
     }
 }
 
-void makeBoard()
+void makeBoard(char board[M][N])
 {
     int shipsLeft = numberOfShips;
     while (shipsLeft > 0) {
@@ -56,8 +209,9 @@ void makeBoard()
     }
 }
 
-void printBoard()
+void printBoard(char board[M][N])
 {
+    
     for (int r = 0; r < M; r++) {
         if ((M - r) >= 10) {
             std::cout << M - r;
@@ -75,8 +229,9 @@ void printBoard()
     }
 }
 
-void printPlayerBoard()
+void printPlayerBoard(char board[M][N])
 {
+    
     for (int r = 0; r < M; r++) {
         if ((M - r) >= 10) {
             std::cout << M - r;
@@ -139,7 +294,7 @@ void mainMenu()
             changePassword();
             break;
         case '2':
-            //battleships
+            play();
             break;
         case '3':
             userWantsToExit = true;
