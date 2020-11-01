@@ -13,8 +13,8 @@
 int main()
 {
     srand(time(NULL));
-    play();
-    /*int loginValue = login();
+    
+    int loginValue = login();
     if (loginValue == 2) {
         std::cout << "Error. The gridsize exceeds 26 characters and can therefore not fit the alphabet. Please change the values.";
     }
@@ -25,7 +25,7 @@ int main()
         std::cout << "Successful login!\n";
         system("pause");
         mainMenu();
-    }*/
+    }
 
     return 0;
 }
@@ -43,8 +43,10 @@ void play()
         makeBoard(aiBoard);
     }
     
-    numberOfShots = numberOfShips * 3;
-    while (numberOfShots > 0 && numberOfHits < numberOfShips) {
+    numberOfShots = numberOfShips * 4;
+    aiNumberOfShots = numberOfShots;
+    bool gameRunning = true;
+    while (gameRunning) {
         std::cout << "You have " << numberOfShots << " shots left, there are " << numberOfShips - numberOfHits << " ships left, so far you have sunk " << numberOfHits << " ships.\n";
         std::cout << "The top board is where you will guess. The bottom one is your ships, and the AI will guess.\n";
         if (displayShipLocations) {
@@ -56,16 +58,136 @@ void play()
         
         writeLetters();
         std::cout << "\nYour ships:\n";
+        std::cout << "Ai has " << aiNumberOfHits << " hits, " << aiNumberOfShots << " shots left, and has " << numberOfShips - aiNumberOfHits << " ships left to hit.\n";
         printBoard(aiBoard);
         shoot(playerBoard);
-        system("cls");
+        aiTask();
+        
+
+        if (numberOfShots == 0 || aiNumberOfShots == 0) {
+            gameRunning = false;
+        }
+        else if (numberOfHits == numberOfShips || aiNumberOfHits == numberOfShips) {
+            gameRunning = false;
+        }
+        else {
+            system("cls");
+        }
+
     }
-    
+    system("cls");
+    if (displayShipLocations) {
+        printBoard(playerBoard);
+    }
+    else {
+        printPlayerBoard(playerBoard);
+    }
+
+    writeLetters();
+    std::cout << "\nYour ships:\n";
+    std::cout << "Ai has " << aiNumberOfHits << " hits, " << aiNumberOfShots << " shots left, and has " << numberOfShips - aiNumberOfHits << " ships left to hit.\n";
+    printBoard(aiBoard);
+    if (aiNumberOfHits > numberOfHits) {
+        std::cout << "Better luck next time!\n";
+    }
+    else if (numberOfHits > aiNumberOfHits) {
+        std::cout << "Congratulations! You won!\n";
+    }
+    else if (numberOfHits == aiNumberOfHits) {
+        std::cout << "It was a draw!\n";
+    }
+    system("pause");
     
 }
 
 void aiTask() 
 {
+    int targetRow{};
+    int targetCol{};
+    int highestValue{};
+    for (int r = 0; r < M; r++) {
+        for (int c = 0; c < M; c++) {
+            if (aiTargetValues[r][c] > highestValue) {
+                targetRow = r;
+                targetCol = c;
+                highestValue = aiTargetValues[r][c];
+            }
+        }
+    }
+    if (highestValue == 1) {
+        bool notRepeatingShot = false;
+        while (!notRepeatingShot) {
+            targetRow = randomRow();
+            targetCol = randomColumn();
+
+            if (aiBoard[targetRow][targetCol] != HIT && aiBoard[targetRow][targetCol] != MISS) {
+                notRepeatingShot = true;
+            }
+        }
+        
+    }
+    
+    if (aiBoard[targetRow][targetCol] == SHIP) {
+        if (targetRow == 0) {
+            if (targetCol == 0) {
+                aiTargetValues[targetRow + 1][targetCol] *= 5;
+                aiTargetValues[targetRow][targetCol + 1] *= 5;
+            }
+            else if (targetCol == (N-1)) {
+                aiTargetValues[targetRow + 1][targetCol] *= 5;
+                aiTargetValues[targetRow][targetCol - 1] *= 5;
+            }
+            else {
+                aiTargetValues[targetRow][targetCol + 1] *= 5;
+                aiTargetValues[targetRow][targetCol - 1] *= 5;
+                aiTargetValues[targetRow + 1][targetCol] *= 5;
+            }
+        }
+        else if (targetRow == (M - 1)) {
+            if (targetCol == 0) {
+                aiTargetValues[targetRow - 1][targetCol] *= 5;
+                aiTargetValues[targetRow][targetCol + 1] *= 5;
+            }
+            else if (targetCol == (N - 1)) {
+                aiTargetValues[targetRow - 1][targetCol] *= 5;
+                aiTargetValues[targetRow][targetCol - 1] *= 5;
+            }
+            else {
+                aiTargetValues[targetRow - 1][targetCol] *= 5;
+                aiTargetValues[targetRow][targetCol - 1] *= 5;
+                aiTargetValues[targetRow][targetCol + 1] *= 5;
+            }
+        }
+        else {
+            if (targetCol == 0) {
+                aiTargetValues[targetRow - 1][targetCol] *= 5;
+                aiTargetValues[targetRow + 1][targetCol] *= 5;
+                aiTargetValues[targetRow][targetCol + 1] *= 5;
+            }
+            else if (targetCol == (N - 1)) {
+                aiTargetValues[targetRow - 1][targetCol] *= 5;
+                aiTargetValues[targetRow + 1][targetCol] *= 5;
+                aiTargetValues[targetRow][targetCol - 1] *= 5;
+            }
+            else {
+                aiTargetValues[targetRow - 1][targetCol] *= 5;
+                aiTargetValues[targetRow + 1][targetCol] *= 5;
+                aiTargetValues[targetRow][targetCol - 1] *= 5;
+                aiTargetValues[targetRow][targetCol + 1] *= 5;
+            }
+        }       
+        
+        aiBoard[targetRow][targetCol] = HIT;
+        aiNumberOfShots--;
+        aiNumberOfHits++;
+        aiTargetValues[targetRow][targetCol] *= 0;
+    }
+    else {
+        aiBoard[targetRow][targetCol] = MISS;
+        aiNumberOfShots--;
+        aiTargetValues[targetRow][targetCol] *= 0;
+    }
+    
 
 }
 
@@ -294,6 +416,7 @@ void mainMenu()
             changePassword();
             break;
         case '2':
+            system("cls");
             play();
             break;
         case '3':

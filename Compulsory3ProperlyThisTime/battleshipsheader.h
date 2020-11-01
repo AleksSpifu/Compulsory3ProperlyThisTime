@@ -1,6 +1,6 @@
 #pragma once
 
-const int M = 10, N = 10;
+const int M = 6, N = 6;
 const char BLANK = ' ';
 const char SHIP = 'S';
 const char MISS = 'M';
@@ -13,8 +13,9 @@ int numberOfShots{};
 char aiBoard[M][N];
 int aiNumberOfHits{};
 int aiNumberOfShots{};
+std::vector <std::vector <int> > aiTargetValues(M, std::vector <int> (N, 1));
 
-bool displayShipLocations = true;
+bool displayShipLocations = false;
 bool threeTiledShips = true;
 
 int letterToNumber(char letter);
