@@ -1,6 +1,6 @@
 #pragma once
 
-//All of the top ones are connected with all the login logic, and these are the "Settings".
+//This header file handles all the login stuff, and these are the "Settings".
 //If you change the grid size after a password has been set, there is no failsafe to make sure
 //the password still works, so you might need to delete the password from the file.
 const std::string fileName = "password.txt";
